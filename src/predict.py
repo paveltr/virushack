@@ -3,6 +3,7 @@ import random
 import pandas as pd
 
 app = Flask(__name__)
+app.config['JSON_AS_ASCII'] = False
 
 
 @app.errorhandler(Exception)
@@ -21,16 +22,14 @@ def index():
 def predict(text):
     # temp
 
-    diseases = [r'Диабет', r'Коронарус', r'Геморрой', r'ОРВИ', 
-            r'Рак простаты', r'Трещина прямой кишки', r'Волчанка', 
-            r'Порок сердца', r'Язва желудка', r'Болезнь Паркинсона']
+    diseases = [r'Диабет', r'Коронарус', r'Геморрой', r'ОРВИ',
+                r'Рак простаты', r'Трещина прямой кишки', r'Волчанка',
+                r'Порок сердца', r'Язва желудка', r'Болезнь Паркинсона']
 
-    predictions = pd.DataFrame({r'Болезнь' : [str(r) for r in random.sample(diseases, 3)],
-                                r'Вероятность' : sorted([random.random() for i in range(3)])[::-1]
-                                }).to_json(orient='records',
-                                        force_ascii=False)
+    predictions = pd.DataFrame({r'Болезнь': [str(r) for r in random.sample(diseases, 3)],
+                                r'Вероятность': sorted([random.random() for i in range(3)])[::-1]
+                                }).to_json(orient='records', force_ascii=False)
 
-    
     return jsonify(predictions), 200
 
 
