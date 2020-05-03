@@ -54,5 +54,14 @@ spec:
           ports:
             - containerPort: 80
               name: api
+          env:
+          - name: SLE_START_WWW
+            value: "true"
+          - name: SLE_RUN
+            value: /var/run/sle
+          - name: ENVIRONMENT
+            value: staging
+          - name: SLE_START_CRON
+            value: "false"
       nodeSelector:
         role: main
