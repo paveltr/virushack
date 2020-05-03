@@ -10,7 +10,7 @@ spec:
     metadata:
       labels:
         app: virushack-prediction
-        role: apiserver
+        role: api
     spec:
       affinity:
         nodeAffinity:
@@ -32,7 +32,7 @@ spec:
       containers:
         - image: gcr.io/virushack-prediction-cluster/virushack-prediction-api:staging
           imagePullPolicy: IfNotPresent
-          name: apiserver
+          name: api
           securityContext:
             privileged: true
           command:

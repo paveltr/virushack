@@ -6,7 +6,7 @@ spec:
   type: LoadBalancer
   selector:
     app: virushack-prediction
-    role: apiserver
+    role: api
   ports:
   - port: 80
     targetPort: 80
