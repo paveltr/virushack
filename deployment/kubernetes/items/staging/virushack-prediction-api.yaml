@@ -10,7 +10,7 @@ spec:
     metadata:
       labels:
         app: virushack-prediction
-        role: virushack-prediction
+        role: apiserver
     spec:
       affinity:
         nodeAffinity:
