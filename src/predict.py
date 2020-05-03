@@ -18,9 +18,8 @@ def index():
     return render_template('index.html')
 
 
-@app.route("/predict/<string:text>", methods=['GET'])
+@app.route("/predict/<string:text>", methods=['GET', 'POST'])
 def predict(text):
-    # temp
 
     diseases = [r'Диабет', r'Коронарус', r'Геморрой', r'ОРВИ',
                 r'Рак простаты', r'Трещина прямой кишки', r'Волчанка',
@@ -30,6 +29,8 @@ def predict(text):
                                 r'Вероятность': sorted([random.random() for i in range(3)])[::-1]
                                 }).to_json(orient='records', force_ascii=False)
 
+    if request.method == 'POST':
+        symptoms = request.form.get('text')
     return jsonify(predictions), 200
 
 
