@@ -1,10 +1,9 @@
 #!/bin/sh
 
-echo "prediction-admission"
+echo "MyMed starting..."
 
 source /opt/miniconda/bin/activate sle-env
 
 cd src
 
-#python3 ./create_data.py
 python3 ./predict.py
