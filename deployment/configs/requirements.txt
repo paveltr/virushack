@@ -1,0 +1,2 @@
+google.cloud>=0.32.0
+bottle>=0.12.0

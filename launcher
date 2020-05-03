@@ -1,0 +1,10 @@
+#!/bin/sh
+
+echo "prediction-admission"
+
+source /opt/miniconda/bin/activate sle-env
+
+cd src
+
+#python3 ./create_data.py
+python3 ./predict.py

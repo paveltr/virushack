@@ -1,0 +1,51 @@
+worker_processes 1;
+
+daemon off;
+user nobody nogroup;
+pid ${SLE_RUN}/nginx.pid;
+error_log /dev/stdout info;
+
+events {
+    worker_connections  1024;  ## Default: 1024
+}
+
+http {
+
+    include mime.types;
+    # fallback in case we can't determine a type
+    default_type application/octet-stream;
+
+    sendfile on;
+
+    gzip              on;
+    gzip_http_version 1.0;
+    gzip_proxied      any;
+    gzip_min_length   500;
+    gzip_disable      "MSIE [1-6]\.";
+    gzip_types        text/plain text/xml text/css
+                      text/comma-separated-values
+                      text/javascript
+                      application/x-javascript
+                      application/atom+xml
+                      application/json text/json;
+
+    client_body_temp_path /tmp 1 2;
+
+    include /etc/nginx/conf.d/*.conf;
+
+    # write logs to STDOUT, next, StackDriver will catch output
+    access_log /dev/stdout benchmarked;
+
+    server {
+        server_name  ____;
+        listen 80 default_server;
+        root /var/www;
+        client_max_body_size 5M;
+        # DYNAMIC CONTENT
+        location / {
+            include /etc/nginx/uwsgi_params;
+            uwsgi_pass unix:${SLE_RUN}/sle.sock;
+        }
+    }
+
+}

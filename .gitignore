@@ -1,0 +1,64 @@
+# ----------------------
+# IDE stuff
+# ----------------------
+.idea
+.project
+.pydevproject
+.settings
+# ----------------------
+# Generated output
+# ----------------------
+*.py[oc]
+/build
+/dist
+**/output
+**/temp
+Thumbs.db
+.sync
+/route4me-oa.test.sqlite
+/tmp
+.kube
+# ----------------------
+# Logs and caches
+# ----------------------
+*/ghostdriver.log
+/log
+.cache
+.ipynb_checkpoints
+*/**/.ipynb_checkpoints
+# ----------------------
+# DEV-dependencies
+# ----------------------
+**/__pycache__
+**/node_modules
+# ----------------------
+# Test/Coverage stuff
+# ----------------------
+.coverage
+coverage.xml
+# ----------------------
+# Compiled translation files
+# ----------------------
+*.mo
+# ----------------------
+# PRIVATE files
+# ----------------------
+.env
+.npmrc
+.google.auth.json
+
+# actual config now is private, and git-ignored
+
+# Local environment
+
+.dockerignore
+.env
+
+# Deployment
+
+deployment/kubernetes/credentials/
+deployment/kubernetes/credentials.zip
+src/config/
+src/config/*
+venv/*
+src/data/*.csv
