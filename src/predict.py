@@ -21,16 +21,20 @@ def index():
 @app.route("/predict/<string:text>", methods=['GET', 'POST'])
 def predict(text):
 
+    if request.method == 'POST':
+        symptoms = request.form.get('text')
+    else:
+        symptoms = None
+
     diseases = [r'Диабет', r'Коронарус', r'Геморрой', r'ОРВИ',
                 r'Рак простаты', r'Трещина прямой кишки', r'Волчанка',
                 r'Порок сердца', r'Язва желудка', r'Болезнь Паркинсона']
 
     predictions = pd.DataFrame({r'Болезнь': [str(r) for r in random.sample(diseases, 3)],
-                                r'Вероятность': sorted([random.random() for i in range(3)])[::-1]
+                                r'Вероятность': sorted([random.random() for i in range(3)])[::-1],
+                                r'Симптомы': [symptoms]*3
                                 }).to_json(orient='records', force_ascii=False)
 
-    if request.method == 'POST':
-        symptoms = request.form.get('text')
     return jsonify(predictions), 200
 
 
