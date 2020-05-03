@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+piVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: virushack-prediction
@@ -10,7 +10,7 @@ spec:
     metadata:
       labels:
         app: virushack-prediction
-        role: api
+        role: virushack-prediction
     spec:
       affinity:
         nodeAffinity:
@@ -29,6 +29,15 @@ spec:
                 operator: In
                 values:
                 - main-pool
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - virushack-prediction
+            topologyKey: "kubernetes.io/hostname"
       containers:
         - image: gcr.io/virushack-prediction-cluster/virushack-prediction-api:staging
           imagePullPolicy: IfNotPresent
