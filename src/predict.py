@@ -16,7 +16,7 @@ def index():
     return render_template('index.html')
 
 
-@app.route("/predict/<str:text>", methods=['GET'])
+@app.route("/predict/<string:text>", methods=['GET'])
 def predict(user_id):
     return jsonify({'user_id': user_id, 'error':
                     {'message': 'Not enough data to make prediction for this patient'}}), 404
