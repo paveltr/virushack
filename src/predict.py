@@ -24,7 +24,7 @@ def predict(text):
     if request.method == 'POST':
         symptoms = request.form.get('text')
     else:
-        symptoms = None
+        symptoms = text
 
     diseases = [r'Диабет', r'Коронарус', r'Геморрой', r'ОРВИ',
                 r'Рак простаты', r'Трещина прямой кишки', r'Волчанка',
