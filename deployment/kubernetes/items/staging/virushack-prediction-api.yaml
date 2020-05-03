@@ -1,7 +1,7 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: virushack-prediction-api
+  name: virushack-prediction
 spec:
   replicas: 1
   strategy:
@@ -9,8 +9,8 @@ spec:
   template:
     metadata:
       labels:
-        app: virushack-prediction-api
-        role: virushack-prediction-api
+        app: virushack-prediction
+        role: virushack-prediction
     spec:
       affinity:
         nodeAffinity:
@@ -36,7 +36,7 @@ spec:
               - key: app
                 operator: In
                 values:
-                - virushack-prediction-api
+                - virushack-prediction
             topologyKey: "kubernetes.io/hostname"
       containers:
         - image: gcr.io/virushack-prediction-cluster/virushack-prediction-api:staging
