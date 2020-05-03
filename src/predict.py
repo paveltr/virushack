@@ -22,7 +22,7 @@ def index():
 def predict(text):
 
     if request.method == 'POST':
-        symptoms = request.form.get('text')
+        symptoms = request.json['text']
     else:
         symptoms = text
 
