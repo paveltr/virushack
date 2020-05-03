@@ -29,15 +29,6 @@ spec:
                 operator: In
                 values:
                 - main-pool
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - virushack-prediction
-            topologyKey: "kubernetes.io/hostname"
       containers:
         - image: gcr.io/virushack-prediction-cluster/virushack-prediction-api:staging
           imagePullPolicy: IfNotPresent
