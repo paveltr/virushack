@@ -1,21 +1,4 @@
-from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.schema import CreateTable
-from sqlalchemy import *
-from flasgger.utils import swag_from
-from sqlalchemy import PrimaryKeyConstraint, Index
-from flask_migrate import Migrate
-from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, jsonify, request, render_template
-import pandas as pd
-from dateutil.parser import parse
-from datetime import date, datetime
-import sys
-import csv
-import os
-import datetime
-import pymysql
-
-pymysql.install_as_MySQLdb()
 
 
 app = Flask(__name__)
