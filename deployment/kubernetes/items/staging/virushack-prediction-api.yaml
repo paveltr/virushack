@@ -49,8 +49,7 @@ spec:
           - -c
           - >
             set -o allexport &&
-            supervisord -c /etc/supervisord.conf &&
-            sleep infinity & wait;
+            supervisord -c /etc/supervisord.conf
           ports:
             - containerPort: 80
               name: api

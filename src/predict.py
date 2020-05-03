@@ -17,9 +17,9 @@ def index():
 
 
 @app.route("/predict/<string:text>", methods=['GET'])
-def predict(user_id):
-    return jsonify({'user_id': user_id, 'error':
-                    {'message': 'Not enough data to make prediction for this patient'}}), 404
+def predict(text):
+    return jsonify({'model': None, 'error':
+                    {'message': 'No model yet'}}), 404
 
 
 @app.route("/health", methods=['GET'])
