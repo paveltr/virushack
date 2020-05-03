@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request, render_template
-
+import random
+import pandas as pd
 
 app = Flask(__name__)
 
@@ -18,8 +19,19 @@ def index():
 
 @app.route("/predict/<string:text>", methods=['GET'])
 def predict(text):
-    return jsonify({'model': None, 'error':
-                    {'message': 'No model yet'}}), 404
+    # temp
+
+    diseases = [r'Диабет', r'Коронарус', r'Геморрой', r'ОРВИ', 
+            r'Рак простаты', r'Трещина прямой кишки', r'Волчанка', 
+            r'Порок сердца', r'Язва желудка', r'Болезнь Паркинсона']
+
+    predictions = pd.DataFrame({r'Болезнь' : [str(r) for r in random.sample(diseases, 3)],
+                                r'Вероятность' : sorted([random.random() for i in range(3)])[::-1]
+                                }).to_json(orient='records',
+                                        force_ascii=False)
+
+    
+    return jsonify(predictions), 200
 
 
 @app.route("/health", methods=['GET'])
