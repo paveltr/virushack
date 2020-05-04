@@ -7,8 +7,8 @@ from joblib import load
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
-clf = load('model/mymed_v0.joblib')
-pcp_dict = load('model/pcp_dict.joblib')
+clf = load('/var/www/src/model/mymed_v0.joblib')
+pcp_dict = load('/var/www/src/model/pcp_dict.joblib')
 
 
 def check_age(age):
@@ -47,7 +47,7 @@ def index():
     return render_template('index.html')
 
 
-@app.route("/predict/<string:text>", methods=['GET', 'POST'])
+@app.route("/predict", methods=['GET', 'POST'])
 def predict(text):
 
     if request.method == 'POST':
