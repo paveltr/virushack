@@ -1,20 +1,26 @@
-import model
+from joblib import dump, load
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.preprocessing import OneHotEncoder, FunctionTransformer
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn import svm
+from sklearn.feature_extraction.text import TfidfVectorizer
 from flask import Flask, jsonify, request, render_template
 import random
 import pandas as pd
-from joblib import load
 import re
 import warnings
-import pickle
-from sklearn.base import BaseEstimator, TransformerMixin
 
 warnings.filterwarnings('ignore')
 
 
-app = Flask(__name__)
-app.config['JSON_AS_ASCII'] = False
+def text_normalize(x):
+    return ' '.join(r for r in re.findall(r'[а-я]+', str(x).lower())
+                    if len(r) > 2)
 
-global clf, pcp_dict
+
+def top_pair(values, keys, n=3):
+    return sorted(zip(values, keys), reverse=True)[:n]
 
 
 class ItemSelector(BaseEstimator, TransformerMixin):
@@ -60,16 +66,86 @@ class ItemSelector(BaseEstimator, TransformerMixin):
             return data_dict[self.key].values.reshape(-1, 1)
 
 
-clf, pcp_dict = model.main()
+def get_model():
+
+    # Data
+
+    train = pd.read_csv(r'/var/www/src/train_data.csv', sep=';')
+    train['symptomps'] = train['Жалобы'].map(text_normalize)
+    train['gender'] = train['Пол'].map(
+        lambda x: 'мужской' if x == 1 else 'женский')
+    train['age'] = train['Возраст'].astype(str).values
+    diag = pd.read_pickle(r'/var/www/src/diagnoz_vrach.pickle')
+
+    train = train[train['Код_диагноза'].isin(diag.keys())]
+
+    # Remove rare diseases
+
+    train['Диагноз'].value_counts()
+
+    t = train['Диагноз'].value_counts()
+    t = t[t <= 50]
+
+    train = train[~train['Диагноз'].isin(t.index)]
+
+    # Pipeline
+
+    # Simple train/test split
+
+    test = train.sample(frac=0.1, random_state=0)
+
+    X = train[~train['Id_Записи'].isin(test['Id_Записи'].unique())]
+    y = train[~train['Id_Записи'].isin(
+        test['Id_Записи'].unique())]['Диагноз'].values
+
+    # Model
+
+    clf = CalibratedClassifierCV(
+        base_estimator=svm.SVC(kernel='linear',
+                               C=.1, probability=False),
+        method='isotonic')
+
+    model = Pipeline([
+        ('union', FeatureUnion(
+            transformer_list=[
+
+                # Pipeline for pulling features
+                    ('tfidf', Pipeline([
+                        ('selector', ItemSelector(key='symptomps')),
+                        ('tdidf', TfidfVectorizer(min_df=10))
+                    ])),
+                ('age', Pipeline([
+                    ('selector', ItemSelector(key='age')),
+                    ('ohe', OneHotEncoder(handle_unknown='ignore'))
+                ])),
+                ('gender', Pipeline([
+                    ('selector', ItemSelector(key='gender')),
+                    ('ohe', OneHotEncoder(handle_unknown='ignore'))
+                ])),
+            ],
+
+            # weight components in FeatureUnion
+            transformer_weights={
+                'tfidf': 0.8,
+                'age': 0.1,
+                'gender': 0.1
+            },
+        )),
+        ('svc', clf)])
+
+    model.fit(X, y)
+
+    return clf
 
 
-def text_normalize(x):
-    return ' '.join(r for r in re.findall(r'[а-я]+', str(x).lower())
-                    if len(r) > 2)
+warnings.filterwarnings('ignore')
 
 
-def top_pair(values, keys, n=3):
-    return sorted(zip(values, keys), reverse=True)[:n]
+app = Flask(__name__)
+app.config['JSON_AS_ASCII'] = False
+
+clf = get_model()
+pcp_dict = load('/var/www/src/model/pcp_dict.joblib')
 
 
 def predict_diag(model, X):
