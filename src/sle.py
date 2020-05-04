@@ -112,7 +112,7 @@ def get_model():
                 # Pipeline for pulling features
                     ('tfidf', Pipeline([
                         ('selector', ItemSelector(key='symptomps')),
-                        ('tdidf', TfidfVectorizer(analyzer='char', ngram_range=(1,5)))
+                        ('tdidf', TfidfVectorizer(analyzer='char', ngram_range=(1,4)))
                     ])),
                 ('age', Pipeline([
                     ('selector', ItemSelector(key='age')),
