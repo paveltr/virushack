@@ -84,7 +84,7 @@ def get_model():
     train['Диагноз'].value_counts()
 
     t = train['Диагноз'].value_counts()
-    t = t[t <= 50]
+    t = t[t <= 150]
 
     train = train[~train['Диагноз'].isin(t.index)]
 
@@ -100,7 +100,8 @@ def get_model():
 
     # Model
 
-    clf = svm.SVC(kernel='linear', C=.1, probability=True)
+    clf = svm.SVC(kernel='linear', C=.1, probability=True,
+                  class_weight='balanced')
 
     model = Pipeline([
         ('union', FeatureUnion(
@@ -109,7 +110,8 @@ def get_model():
                 # Pipeline for pulling features
                     ('tfidf', Pipeline([
                         ('selector', ItemSelector(key='symptomps')),
-                        ('tdidf', TfidfVectorizer(analyzer='char', ngram_range=(1,4)))
+                        ('tdidf', TfidfVectorizer(
+                            analyzer='char', ngram_range=(1, 3)))
                     ])),
                 ('age', Pipeline([
                     ('selector', ItemSelector(key='age')),
