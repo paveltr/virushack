@@ -100,10 +100,7 @@ def get_model():
 
     # Model
 
-    clf = CalibratedClassifierCV(
-        base_estimator=svm.SVC(kernel='linear',
-                               C=.1, probability=False),
-        method='isotonic')
+    clf = svm.SVC(kernel='linear', C=.1, probability=True)
 
     model = Pipeline([
         ('union', FeatureUnion(
