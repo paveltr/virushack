@@ -1,9 +1,38 @@
 from flask import Flask, jsonify, request, render_template
 import random
 import pandas as pd
+from lib.classifier import *
+from joblib import load
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
+
+clf = load('model/mymed_v0.joblib')
+pcp_dict = load('model/pcp_dict.joblib')
+
+
+def check_age(age):
+    try:
+        if 0 < int(age) < 200:
+            return str(age)
+        else:
+            return str(35)
+    except ValueError:
+        return str(35)
+
+
+def check_gender(gender):
+    if gender not in [r'мужской', r'женский']:
+        return r'женский'
+    return str(gender)
+
+
+def check_diag(diag):
+    diag = str(diag)
+    if len(diag) < 3:
+        return r'Ничего'
+    else:
+        return text_normalize(diag)
 
 
 @app.errorhandler(Exception)
@@ -22,20 +51,24 @@ def index():
 def predict(text):
 
     if request.method == 'POST':
-        symptoms = request.json['text']
-    else:
-        symptoms = text
+        symptomps = check_diag(request.json['symptomps'])
+        age = check_age(request.json['age'])
+        gender = check_gender(request.json['gender'])
 
-    diseases = [r'Диабет', r'Коронарус', r'Геморрой', r'ОРВИ',
-                r'Рак простаты', r'Трещина прямой кишки', r'Волчанка',
-                r'Порок сердца', r'Язва желудка', r'Болезнь Паркинсона']
+    elif request.method == 'GET':
+        symptomps = check_diag(request.args.get('symptomps', r'Ничего'))
+        age = check_age(request.args.get('age', r'35'))
+        gender = check_gender(request.args.get('gender', r'женский'))
 
-    predictions = pd.DataFrame({r'Болезнь': [str(r) for r in random.sample(diseases, 3)],
-                                r'Вероятность': sorted([random.random() for i in range(3)])[::-1],
-                                r'Симптомы': [symptoms]*3
-                                }).to_json(orient='records', force_ascii=False)
+    data = pd.DataFrame({'symptomps': [symptomps],
+                         'age': [age],
+                         'gender': [gender]})
 
-    return jsonify(predictions), 200
+    prediction = pd.DataFrame(predict_diag(clf, data)[0], columns=['Вероятность', 
+                                                                   'Болезнь'])
+    prediction['Доктор'] = prediction['Болезнь'].map(pcp_dict)
+
+    return jsonify(prediction.to_json(orient='records', force_ascii=False)), 200
 
 
 @app.route("/health", methods=['GET'])
