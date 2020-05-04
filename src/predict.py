@@ -1,9 +1,4 @@
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.preprocessing import OneHotEncoder, FunctionTransformer
-from sklearn.calibration import CalibratedClassifierCV
-from sklearn.pipeline import Pipeline, FeatureUnion
-from sklearn import svm
-from sklearn.feature_extraction.text import TfidfVectorizer
+import model
 from flask import Flask, jsonify, request, render_template
 import random
 import pandas as pd
@@ -11,25 +6,15 @@ from joblib import load
 import re
 import warnings
 import pickle
+from sklearn.base import BaseEstimator, TransformerMixin
 
 warnings.filterwarnings('ignore')
+
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
-def text_normalize(x):
-    return ' '.join(r for r in re.findall(r'[а-я]+', str(x).lower())
-                    if len(r) > 2)
-
-
-def top_pair(values, keys, n=3):
-    return sorted(zip(values, keys), reverse=True)[:n]
-
-
-def predict_diag(model, X):
-    predictions = model.predict_proba(X)
-    classes = model.classes_
-    return [top_pair(p, classes) for p in predictions]
+global clf, pcp_dict
 
 
 class ItemSelector(BaseEstimator, TransformerMixin):
@@ -75,69 +60,87 @@ class ItemSelector(BaseEstimator, TransformerMixin):
             return data_dict[self.key].values.reshape(-1, 1)
 
 
-if __name__ == '__main__':
+clf, pcp_dict = model.main()
 
-    global clf, pcp_dict
 
-    clf = load('/var/www/src/model/mymed_v0.joblib')
-    pcp_dict = load('/var/www/src/model/pcp_dict.joblib')
+def text_normalize(x):
+    return ' '.join(r for r in re.findall(r'[а-я]+', str(x).lower())
+                    if len(r) > 2)
 
-    def check_age(age):
-        try:
-            if 0 < int(age) < 200:
-                return str(age)
-            else:
-                return str(35)
-        except ValueError:
-            return str(35)
 
-    def check_gender(gender):
-        if gender not in [r'мужской', r'женский']:
-            return r'женский'
-        return str(gender)
+def top_pair(values, keys, n=3):
+    return sorted(zip(values, keys), reverse=True)[:n]
 
-    def check_diag(diag):
-        diag = str(diag)
-        if len(diag) < 3:
-            return r'Ничего'
+
+def predict_diag(model, X):
+    predictions = model.predict_proba(X)
+    classes = model.classes_
+    return [top_pair(p, classes) for p in predictions]
+
+def check_age(age):
+    try:
+        if 0 < int(age) < 200:
+            return str(age)
         else:
-            return text_normalize(diag)
+            return str(35)
+    except ValueError:
+        return str(35)
 
-    @app.errorhandler(Exception)
-    def internal_error(exception):
-        app.logger.error(exception)
-        data = {'error': 'Bad Request'}
-        return jsonify(data), 500
 
-    @app.route("/", methods=['GET', 'POST'])
-    def index():
-        return render_template('index.html')
+def check_gender(gender):
+    if gender not in [r'мужской', r'женский']:
+        return r'женский'
+    return str(gender)
 
-    @app.route("/predict", methods=['GET', 'POST'])
-    def predict():
 
-        if request.method == 'POST':
-            symptomps = check_diag(request.json['symptomps'])
-            age = check_age(request.json['age'])
-            gender = check_gender(request.json['gender'])
+def check_diag(diag):
+    diag = str(diag)
+    if len(diag) < 3:
+        return r'Ничего'
+    else:
+        return text_normalize(diag)
 
-        elif request.method == 'GET':
-            symptomps = check_diag(request.args.get('symptomps', r'Ничего'))
-            age = check_age(request.args.get('age', r'35'))
-            gender = check_gender(request.args.get('gender', r'женский'))
 
-        data = pd.DataFrame({'symptomps': [symptomps],
-                             'age': [age],
-                             'gender': [gender]})
+@app.errorhandler(Exception)
+def internal_error(exception):
+    app.logger.error(exception)
+    data = {'error': 'Bad Request'}
+    return jsonify(data), 500
 
-        prediction = pd.DataFrame(predict_diag(clf, data)[0], columns=['Вероятность',
-                                                                       'Болезнь'])
-        prediction['Доктор'] = prediction['Болезнь'].map(pcp_dict)
 
-        return jsonify(prediction.to_json(orient='records', force_ascii=False)), 200
+@app.route("/", methods=['GET', 'POST'])
+def index():
+    return render_template('index.html')
 
-    @app.route("/health", methods=['GET'])
-    def health():
-        return jsonify({}), 200
 
+@app.route("/predict", methods=['GET', 'POST'])
+def predict():
+
+    if request.method == 'POST':
+        symptomps = check_diag(request.json['symptomps'])
+        age = check_age(request.json['age'])
+        gender = check_gender(request.json['gender'])
+
+    elif request.method == 'GET':
+        symptomps = check_diag(request.args.get('symptomps', r'Ничего'))
+        age = check_age(request.args.get('age', r'35'))
+        gender = check_gender(request.args.get('gender', r'женский'))
+
+    data = pd.DataFrame({'symptomps': [symptomps],
+                         'age': [age],
+                         'gender': [gender]})
+
+    prediction = pd.DataFrame(predict_diag(clf, data)[0], columns=['Вероятность',
+                                                                   'Болезнь'])
+    prediction['Доктор'] = prediction['Болезнь'].map(pcp_dict)
+
+    return jsonify(prediction.to_json(orient='records', force_ascii=False)), 200
+
+
+@app.route("/health", methods=['GET'])
+def health():
+    return jsonify({}), 200
+
+
+if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)
