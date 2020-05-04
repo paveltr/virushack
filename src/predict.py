@@ -18,7 +18,6 @@ warnings.filterwarnings('ignore')
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
-global clf, pcp_dict
 
 def text_normalize(x):
     return ' '.join(r for r in re.findall(r'[а-я]+', str(x).lower())
@@ -76,6 +75,12 @@ class ItemSelector(BaseEstimator, TransformerMixin):
             return data_dict[self.key]
         else:
             return data_dict[self.key].values.reshape(-1, 1)
+
+
+global clf, pcp_dict
+
+clf = load('/var/www/src/model/mymed_v0.joblib')
+pcp_dict = load('/var/www/src/model/pcp_dict.joblib')
 
 
 def check_age(age):
@@ -144,6 +149,4 @@ def health():
 
 
 if __name__ == '__main__':
-    clf = load('/var/www/src/model/mymed_v0.joblib')
-    pcp_dict = load('/var/www/src/model/pcp_dict.joblib')
     app.run(host='0.0.0.0', port=8000)
