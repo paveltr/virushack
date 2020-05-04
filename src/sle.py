@@ -5,6 +5,7 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn import svm
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.ensemble import BaggingClassifier
 from flask import Flask, jsonify, request, render_template
 import random
 import pandas as pd
@@ -100,8 +101,12 @@ def get_model():
 
     # Model
 
-    clf = svm.SVC(kernel='linear', C=.1, probability=True,
-                  class_weight='balanced')
+    clf = CalibratedClassifierCV(
+                base_estimator=BaggingClassifier(svm.LinearSVC(C=.1, class_weight='balanced'),
+                                    n_estimators=10, max_samples=.1,
+                                    bootstrap=False),
+                method='isotonic',
+                cv=3)                            
 
     model = Pipeline([
         ('union', FeatureUnion(
