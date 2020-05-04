@@ -6,4 +6,4 @@ source /opt/miniconda/bin/activate sle-env
 
 cd src
 
-python3 ./predict.py
+python3 ./sle.py
