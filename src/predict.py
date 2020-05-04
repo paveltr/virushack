@@ -18,6 +18,7 @@ warnings.filterwarnings('ignore')
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
+global clf, pcp_dict
 
 def text_normalize(x):
     return ' '.join(r for r in re.findall(r'[а-я]+', str(x).lower())
