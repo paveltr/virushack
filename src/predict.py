@@ -114,7 +114,7 @@ def index():
 
 
 @app.route("/predict", methods=['GET', 'POST'])
-def predict(text):
+def predict():
 
     if request.method == 'POST':
         symptomps = check_diag(request.json['symptomps'])
