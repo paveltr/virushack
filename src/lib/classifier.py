@@ -64,3 +64,6 @@ class ItemSelector(BaseEstimator, TransformerMixin):
             return data_dict[self.key]
         else:
             return data_dict[self.key].values.reshape(-1, 1)
+
+if __name__ == '__main__':
+    ItemSelector.__module__ = "classifier"
