@@ -135,7 +135,7 @@ def get_model():
 
     model.fit(X, y)
 
-    return clf
+    return model
 
 
 warnings.filterwarnings('ignore')
