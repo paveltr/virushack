@@ -18,9 +18,6 @@ warnings.filterwarnings('ignore')
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
-clf = load('/var/www/src/model/mymed_v0.joblib')
-pcp_dict = load('/var/www/src/model/pcp_dict.joblib')
-
 
 def text_normalize(x):
     return ' '.join(r for r in re.findall(r'[а-я]+', str(x).lower())
@@ -146,4 +143,6 @@ def health():
 
 
 if __name__ == '__main__':
+    clf = load('/var/www/src/model/mymed_v0.joblib')
+    pcp_dict = load('/var/www/src/model/pcp_dict.joblib')
     app.run(host='0.0.0.0', port=8000)
