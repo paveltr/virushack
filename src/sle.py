@@ -144,6 +144,7 @@ warnings.filterwarnings('ignore')
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
+global clf, pcp_dict
 clf = get_model()
 pcp_dict = load('/var/www/src/model/pcp_dict.joblib')
 
