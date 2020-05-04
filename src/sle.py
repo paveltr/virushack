@@ -116,7 +116,7 @@ def get_model():
                     ('tfidf', Pipeline([
                         ('selector', ItemSelector(key='symptomps')),
                         ('tdidf', TfidfVectorizer(
-                            analyzer='char', ngram_range=(1, 3)))
+                            analyzer='char', ngram_range=(1, 4)))
                     ])),
                 ('age', Pipeline([
                     ('selector', ItemSelector(key='age')),
