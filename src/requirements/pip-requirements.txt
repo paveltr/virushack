@@ -5,7 +5,7 @@ paramiko==2.4.2
 pymysql==0.9.3
 matplotlib==2.2.2
 cython==0.29.7
-psutil==5.6.2
+psutil==5.6.6
 mysql-connector-python==8.0.13
 google==2.0.2
 google-cloud>=0.3*.*
