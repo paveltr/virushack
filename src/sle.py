@@ -223,14 +223,14 @@ def predict():
     prediction['Доктор'] = prediction['Болезнь'].map(pcp_dict)
     prediction['Диагноз'] = prediction['Болезнь'].map(parse_diag)
 
-    result = pd.DataFrame()
+    result = pd.DataFrame({'key': [1]})
     for i in range(3):
-        result = pd.concat([result,
-                            prediction.iloc[i, :].rename(columns=dict(zip(prediction.columns,
+        merge_df = prediction.iloc[i:i+1, :].rename(columns=dict(zip(prediction.columns,
                                                                      [c + str(i+1)
                                                                       for c in prediction.columns])))
-                            ], axis=1)
-
+        merge_df['key'] = 1
+        result = result.merge(merge_df, how='left', on='key')
+    result.drop('key', axis=1, inplace=True)
     return jsonify(result.to_json(orient='records', force_ascii=False)), 200
 
 
