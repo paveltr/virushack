@@ -102,11 +102,11 @@ def get_model():
     # Model
 
     clf = CalibratedClassifierCV(
-                base_estimator=BaggingClassifier(svm.LinearSVC(C=.1, class_weight='balanced'),
-                                    n_estimators=10, max_samples=.1,
-                                    bootstrap=False),
-                method='isotonic',
-                cv=3)                            
+        base_estimator=BaggingClassifier(svm.LinearSVC(C=.1, class_weight='balanced'),
+                                         n_estimators=10, max_samples=.1,
+                                         bootstrap=False),
+        method='isotonic',
+        cv=3)
 
     model = Pipeline([
         ('union', FeatureUnion(
@@ -116,7 +116,7 @@ def get_model():
                     ('tfidf', Pipeline([
                         ('selector', ItemSelector(key='symptomps')),
                         ('tdidf', TfidfVectorizer(
-                            analyzer='char', ngram_range=(1, 4)))
+                            analyzer='char', ngram_range=(1, 5)))
                     ])),
                 ('age', Pipeline([
                     ('selector', ItemSelector(key='age')),
@@ -183,6 +183,10 @@ def check_diag(diag):
         return text_normalize(diag)
 
 
+def parse_diag(x):
+    return x.split(r'[')[0].split(r',')[0].split(r' и ')[0]
+
+
 @app.errorhandler(Exception)
 def internal_error(exception):
     app.logger.error(exception)
@@ -215,6 +219,7 @@ def predict():
     prediction = pd.DataFrame(predict_diag(clf, data)[0], columns=['Вероятность',
                                                                    'Болезнь'])
     prediction['Доктор'] = prediction['Болезнь'].map(pcp_dict)
+    prediction['Диагноз'] = prediction['Болезнь'].map(parse_diag)
 
     return jsonify(prediction.to_json(orient='records', force_ascii=False)), 200
 
