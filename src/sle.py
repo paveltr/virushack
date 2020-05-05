@@ -1,3 +1,6 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from joblib import dump, load
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder, FunctionTransformer
@@ -16,8 +19,7 @@ warnings.filterwarnings('ignore')
 
 
 def text_normalize(x):
-    return ' '.join(r for r in re.findall(r'[а-я]+', str(x).lower())
-                    if len(r) > 2)
+    return ' '.join(r for r in re.findall(r'[а-я]+', str(x).lower()) if len(r) > 2)
 
 
 def top_pair(values, keys, n=3):
@@ -221,7 +223,15 @@ def predict():
     prediction['Доктор'] = prediction['Болезнь'].map(pcp_dict)
     prediction['Диагноз'] = prediction['Болезнь'].map(parse_diag)
 
-    return jsonify(prediction.to_json(orient='records', force_ascii=False)), 200
+    result = pd.DataFrame()
+    for i in range(3):
+        result = pd.concat([result,
+                            prediction.iloc[i, :].rename(columns=dict(zip(prediction.columns,
+                                                                     [c + str(i+1)
+                                                                      for c in prediction.columns])))
+                            ], axis=1)
+
+    return jsonify(result.to_json(orient='records', force_ascii=False)), 200
 
 
 @app.route("/health", methods=['GET'])
