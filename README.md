@@ -1,4 +1,4 @@
-VirusHack API
+ＭＹＭΣＤ API | VirusHack
 =============
 
 This project contains API for predicting diagnoses based on text descriptions
