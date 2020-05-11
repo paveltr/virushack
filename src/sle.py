@@ -14,12 +14,21 @@ import random
 import pandas as pd
 import re
 import warnings
+from pymystem3 import Mystem
 
 warnings.filterwarnings('ignore')
 
 
-def text_normalize(x):
-    return ' '.join(r for r in re.findall(r'[а-я]+', str(x).lower()) if len(r) > 2)
+def text_normalize(x, method='lemma'):
+    if method == 'simple':
+        return ' '.join(r for r in re.findall(r'[а-я]+', str(x).lower()) if len(r) > 2)
+    elif method == 'lemma':
+        x = str.lower(x)
+        x = mystem.lemmatize(x)
+        x = [i for i in x if i != ' ' and i != '\n']
+        x = ' '.join(x)
+        x = re.sub(' +', ' ', x)
+        return x
 
 
 def top_pair(values, keys, n=3):
@@ -73,35 +82,17 @@ def get_model():
 
     # Data
 
-    train = pd.read_csv(r'/var/www/src/train_data.csv', sep=';')
-    train['symptomps'] = train['Жалобы'].map(text_normalize)
+    train = pd.read_csv(r'/var/www/src/train_data.csv.tar.gz')
+    train['symptomps'] = train['galobi_lem'].values
     train['gender'] = train['Пол'].map(
         lambda x: 'мужской' if x == 1 else 'женский')
     train['age'] = train['Возраст'].astype(str).values
-    diag = pd.read_pickle(r'/var/www/src/diagnoz_vrach.pickle')
-
-    train = train[train['Код_диагноза'].isin(diag.keys())]
-
-    # Remove rare diseases
-
-    train['Диагноз'].value_counts()
-
-    t = train['Диагноз'].value_counts()
-    t = t[t <= 150]
-
-    train = train[~train['Диагноз'].isin(t.index)]
+    train['Id_Записи'] = train.index.tolist()
+    pcp_dict = train.set_index('Диагноз')['doctor'].to_dict()
 
     # Pipeline
 
-    # Simple train/test split
-
-    test = train.sample(frac=0.1, random_state=0)
-
-    X = train[~train['Id_Записи'].isin(test['Id_Записи'].unique())]
-    y = train[~train['Id_Записи'].isin(
-        test['Id_Записи'].unique())]['Диагноз'].values
-
-    # Model
+    y = train['Диагноз'].values
 
     clf = CalibratedClassifierCV(
         base_estimator=BaggingClassifier(svm.LinearSVC(C=.1, class_weight='balanced'),
@@ -139,9 +130,9 @@ def get_model():
         )),
         ('svc', clf)])
 
-    model.fit(X, y)
+    model.fit(train, y)
 
-    return model
+    return model, pcp_dict
 
 
 warnings.filterwarnings('ignore')
@@ -150,9 +141,9 @@ warnings.filterwarnings('ignore')
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
-global clf, pcp_dict
-clf = get_model()
-pcp_dict = load('/var/www/src/model/pcp_dict.joblib')
+global clf, pcp_dict, mystem
+clf, pcp_dict = get_model()
+mystem = Mystem()
 
 
 def predict_diag(model, X):
@@ -180,7 +171,7 @@ def check_gender(gender):
 def check_diag(diag):
     diag = str(diag)
     if len(diag) < 3:
-        return r'Ничего'
+        return r'error'
     else:
         return text_normalize(diag)
 
@@ -210,9 +201,24 @@ def predict():
         gender = check_gender(request.json['gender'])
 
     elif request.method == 'GET':
-        symptomps = check_diag(request.args.get('symptomps', r'Ничего'))
+        symptomps = check_diag(request.args.get('symptomps', r'error'))
         age = check_age(request.args.get('age', r'35'))
         gender = check_gender(request.args.get('gender', r'женский'))
+
+    if symptomps == r'error':
+        result = pd.DataFrame({'Вероятность1': [-1],
+                               'Болезнь1': ['Уточните симптомы, недостаточно данных'],
+                               'Доктор1': ['Уточните симптомы, недостаточно данных'],
+                               'Диагноз1': ['Уточните симптомы, недостаточно данных'],
+                               'Вероятность2': [-1],
+                               'Болезнь2': ['Уточните симптомы, недостаточно данных'],
+                               'Доктор2': ['Уточните симптомы, недостаточно данных'],
+                               'Диагноз2': ['Уточните симптомы, недостаточно данных'],
+                               'Вероятность3': [-1],
+                               'Болезнь3': ['Уточните симптомы, недостаточно данных'],
+                               'Доктор3': ['Уточните симптомы, недостаточно данных'],
+                               'Диагноз3': ['Уточните симптомы, недостаточно данных']})
+        return jsonify(result.to_json(orient='records', force_ascii=False)), 200
 
     data = pd.DataFrame({'symptomps': [symptomps],
                          'age': [age],

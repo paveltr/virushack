@@ -62,3 +62,6 @@ src/config/
 src/config/*
 venv/*
 src/data/*.csv
+
+# DS files
+.DS_Store
