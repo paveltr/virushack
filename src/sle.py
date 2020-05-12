@@ -20,11 +20,11 @@ warnings.filterwarnings('ignore')
 
 
 def text_normalize(x, method='lemma'):
-    x = ' '.join(r for r in re.findall(r'[а-я]+', str(x).lower()) if len(r) > 2)
     if method == 'simple':
+        x = ' '.join(r for r in re.findall(r'[а-я]+', str(x).lower()) if len(r) > 2)
         return x
     elif method == 'lemma':
-        x = mystem.lemmatize(x)
+        x = mystem.lemmatize(str(x).lower())
         x = [i for i in x if i != ' ' and i != '\n']
         x = ' '.join(x)
         x = re.sub(' +', ' ', x)
@@ -99,9 +99,7 @@ def get_model():
     y = train['Диагноз'].values
 
     clf = CalibratedClassifierCV(
-        base_estimator=BaggingClassifier(svm.LinearSVC(C=.1, class_weight='balanced'),
-                                         n_estimators=5, max_samples=.2,
-                                         bootstrap=False),
+        base_estimator=svm.LinearSVC(C=.1, class_weight='balanced'),
         method='isotonic',
         cv=3)
 
