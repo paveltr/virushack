@@ -20,10 +20,10 @@ warnings.filterwarnings('ignore')
 
 
 def text_normalize(x, method='lemma'):
+    x = ' '.join(r for r in re.findall(r'[а-я]+', str(x).lower()) if len(r) > 2)
     if method == 'simple':
-        return ' '.join(r for r in re.findall(r'[а-я]+', str(x).lower()) if len(r) > 2)
+        return x
     elif method == 'lemma':
-        x = str(x).lower()
         x = mystem.lemmatize(x)
         x = [i for i in x if i != ' ' and i != '\n']
         x = ' '.join(x)
@@ -92,7 +92,7 @@ def get_model():
     train = train[train['symptomps'].str.len() > 0]
 
     diag_freq = train['Диагноз'].value_counts()
-    train = train[train['Диагноз'].isin(diag_freq[diag_freq >= 50].index.tolist())]
+    train = train[train['Диагноз'].isin(diag_freq[diag_freq >= 20].index.tolist())]
     
     # Pipeline
 
@@ -100,7 +100,7 @@ def get_model():
 
     clf = CalibratedClassifierCV(
         base_estimator=BaggingClassifier(svm.LinearSVC(C=.1, class_weight='balanced'),
-                                         n_estimators=10, max_samples=.1,
+                                         n_estimators=5, max_samples=.2,
                                          bootstrap=False),
         method='isotonic',
         cv=3)
