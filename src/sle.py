@@ -87,10 +87,13 @@ def get_model():
     train['gender'] = train['Пол'].map(
         lambda x: 'мужской' if x == 1 else 'женский')
     train['age'] = train['Возраст'].astype(str).values
-    train['Id_Записи'] = train.index.tolist()
+    
     pcp_dict = train.set_index('Диагноз')['doctor'].to_dict()
     train = train[train['symptomps'].str.len() > 0]
 
+    diag_freq = train['Диагноз'].value_counts()
+    train = train[train['Диагноз'].isin(diag_freq[diag_freq >= 50].index.tolist())]
+    
     # Pipeline
 
     y = train['Диагноз'].values
