@@ -23,7 +23,7 @@ def text_normalize(x, method='lemma'):
     if method == 'simple':
         return ' '.join(r for r in re.findall(r'[а-я]+', str(x).lower()) if len(r) > 2)
     elif method == 'lemma':
-        x = str.lower(x)
+        x = str(x).lower()
         x = mystem.lemmatize(x)
         x = [i for i in x if i != ' ' and i != '\n']
         x = ' '.join(x)
@@ -89,6 +89,7 @@ def get_model():
     train['age'] = train['Возраст'].astype(str).values
     train['Id_Записи'] = train.index.tolist()
     pcp_dict = train.set_index('Диагноз')['doctor'].to_dict()
+    train = train[train['symptomps'].str.len() > 0]
 
     # Pipeline
 
