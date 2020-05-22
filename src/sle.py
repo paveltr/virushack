@@ -88,15 +88,15 @@ def get_model():
         lambda x: 'мужской' if x == 1 else 'женский')
     train['age'] = train['Возраст'].astype(str).values
     
-    pcp_dict = train.set_index('Диагноз')['doctor'].to_dict()
+    pcp_dict = train.set_index('diagnos_cleaned')['doctor'].to_dict()
     train = train[train['symptomps'].str.len() > 0]
 
-    diag_freq = train['Диагноз'].value_counts()
-    train = train[train['Диагноз'].isin(diag_freq[diag_freq >= 20].index.tolist())]
+    diag_freq = train['diagnos_cleaned'].value_counts()
+    train = train[train['diagnos_cleaned'].isin(diag_freq[diag_freq >= 20].index.tolist())]
     
     # Pipeline
 
-    y = train['Диагноз'].values
+    y = train['diagnos_cleaned'].values
 
     clf = CalibratedClassifierCV(
         base_estimator=svm.LinearSVC(C=.1, class_weight='balanced'),
