@@ -238,7 +238,7 @@ def predict():
     prediction['ICD'] = prediction['Болезнь'].map(icd_dict)
 
     result = pd.DataFrame({'key': [1]})
-    for i in range(4):
+    for i in range(3):
         merge_df = prediction.iloc[i:i+1, :].rename(columns=dict(zip(prediction.columns,
                                                                      [c + str(i+1)
                                                                       for c in prediction.columns])))
