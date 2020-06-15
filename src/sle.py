@@ -89,6 +89,7 @@ def get_model():
     train['age'] = train['Возраст'].astype(str).values
     
     pcp_dict = train.set_index('diagnos_cleaned')['doctor'].to_dict()
+    icd_dict = train.set_index('diagnos_cleaned')['Код_диагноза'].to_dict()
     train = train[train['symptomps'].str.len() > 0]
 
     diag_freq = train['diagnos_cleaned'].value_counts()
@@ -134,7 +135,7 @@ def get_model():
 
     model.fit(train, y)
 
-    return model, pcp_dict
+    return model, pcp_dict, icd_dict
 
 
 warnings.filterwarnings('ignore')
@@ -143,8 +144,8 @@ warnings.filterwarnings('ignore')
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
-global clf, pcp_dict, mystem
-clf, pcp_dict = get_model()
+global clf, pcp_dict, mystem, icd_dict
+clf, pcp_dict, icd_dict = get_model()
 mystem = Mystem()
 
 
@@ -212,14 +213,18 @@ def predict():
                                'Болезнь1': ['Уточните симптомы, недостаточно данных'],
                                'Доктор1': ['Уточните симптомы, недостаточно данных'],
                                'Диагноз1': ['Уточните симптомы, недостаточно данных'],
+                               'ICD': ['Уточните симптомы, недостаточно данных'],
                                'Вероятность2': [-1],
                                'Болезнь2': ['Уточните симптомы, недостаточно данных'],
                                'Доктор2': ['Уточните симптомы, недостаточно данных'],
                                'Диагноз2': ['Уточните симптомы, недостаточно данных'],
+                               'ICD': ['Уточните симптомы, недостаточно данных'],
                                'Вероятность3': [-1],
                                'Болезнь3': ['Уточните симптомы, недостаточно данных'],
                                'Доктор3': ['Уточните симптомы, недостаточно данных'],
-                               'Диагноз3': ['Уточните симптомы, недостаточно данных']})
+                               'Диагноз3': ['Уточните симптомы, недостаточно данных'],
+                               'ICD': ['Уточните симптомы, недостаточно данных']
+                               })
         return jsonify(result.to_json(orient='records', force_ascii=False)), 200
 
     data = pd.DataFrame({'symptomps': [symptomps],
@@ -230,9 +235,10 @@ def predict():
                                                                    'Болезнь'])
     prediction['Доктор'] = prediction['Болезнь'].map(pcp_dict)
     prediction['Диагноз'] = prediction['Болезнь'].map(parse_diag)
+    prediction['ICD'] = prediction['Болезнь'].map(icd_dict)
 
     result = pd.DataFrame({'key': [1]})
-    for i in range(3):
+    for i in range(4):
         merge_df = prediction.iloc[i:i+1, :].rename(columns=dict(zip(prediction.columns,
                                                                      [c + str(i+1)
                                                                       for c in prediction.columns])))
