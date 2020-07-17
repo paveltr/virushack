@@ -18,3 +18,4 @@ shap==0.30.0
 uwsgi==2.0.18
 category-encoders==2.1.0
 pymystem3==0.2.0
+youtokentome==1.0.6

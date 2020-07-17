@@ -15,13 +15,16 @@ import pandas as pd
 import re
 import warnings
 from pymystem3 import Mystem
+import youtokentome as yttm
+import pickle
 
 warnings.filterwarnings('ignore')
 
 
 def text_normalize(x, method='lemma'):
     if method == 'simple':
-        x = ' '.join(r for r in re.findall(r'[а-я]+', str(x).lower()) if len(r) > 2)
+        x = ' '.join(r for r in re.findall(
+            r'[а-я]+', str(x).lower()) if len(r) > 2)
         return x
     elif method == 'lemma':
         x = mystem.lemmatize(str(x).lower())
@@ -29,6 +32,33 @@ def text_normalize(x, method='lemma'):
         x = ' '.join(x)
         x = re.sub(' +', ' ', x)
         return x
+
+
+def remove_special_symbols(string):
+    return re.sub(r'[^\w]+', ' ', string)
+
+
+def replace_numbers(string):
+    return re.sub(r'\b([\d]*)[\!\?\.,-]*([\d]+)\b', '<NUM>', string)
+
+
+def tokenize(text):
+    tokens = bpe.encode([text], output_type=yttm.OutputType.SUBWORD)
+    return ' '.join(tokens[0])
+
+
+def preprocess_text(text):
+    text = remove_special_symbols(text)
+    text = replace_numbers(text)
+    text = tokenize(text)
+    return text
+
+
+def make_prediction(text):
+    text = preprocess_text(text)
+    prediction = model_svm.predict([text])
+    prediction = labelEncoder.inverse_transform(prediction)
+    return prediction
 
 
 def top_pair(values, keys, n=3):
@@ -87,14 +117,15 @@ def get_model():
     train['gender'] = train['Пол'].map(
         lambda x: 'мужской' if x == 1 else 'женский')
     train['age'] = train['Возраст'].astype(str).values
-    
+
     pcp_dict = train.set_index('diagnos_cleaned')['doctor'].to_dict()
     icd_dict = train.set_index('diagnos_cleaned')['Код_диагноза'].to_dict()
     train = train[train['symptomps'].str.len() > 0]
 
     diag_freq = train['diagnos_cleaned'].value_counts()
-    train = train[train['diagnos_cleaned'].isin(diag_freq[diag_freq >= 20].index.tolist())]
-    
+    train = train[train['diagnos_cleaned'].isin(
+        diag_freq[diag_freq >= 20].index.tolist())]
+
     # Pipeline
 
     y = train['diagnos_cleaned'].values
@@ -144,9 +175,21 @@ warnings.filterwarnings('ignore')
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
-global clf, pcp_dict, mystem, icd_dict
+global clf, pcp_dict, mystem, icd_dict, model_svm, labelEncoder
 clf, pcp_dict, icd_dict = get_model()
 mystem = Mystem()
+
+
+BPE_PATH = 'models/bpe.model'
+LENCODER_PATH = 'models/labelEncoder.pickle'
+MODEL_PATH = 'models/model_svm.pickle'
+
+bpe = yttm.BPE(model=BPE_PATH)
+with open(MODEL_PATH, 'rb') as handle:
+    model_svm = pickle.load(handle)
+
+with open(LENCODER_PATH, 'rb') as handle:
+    labelEncoder = pickle.load(handle)
 
 
 def predict_diag(model, X):
@@ -179,6 +222,14 @@ def check_diag(diag):
         return text_normalize(diag)
 
 
+def check_text(text):
+    text = str(text)
+    if len(text) < 3:
+        return r'error'
+    else:
+        return text
+
+
 def parse_diag(x):
     return x.split(r'[')[0].split(r',')[0].split(r' и ')[0]
 
@@ -195,9 +246,21 @@ def index():
     return render_template('index.html')
 
 
+@app.route("/predict_doctor", methods=['GET', 'POST'])
+def predict_doctor():
+    if request.method == 'POST':
+        text = check_text(request.json['text'])
+    elif request.method == 'GET':
+        text = check_text(request.args.get('text', r'error'))
+
+    if text == r'error':
+        return jsonify({'prediction': 'bad input data'}), 200
+    else:
+        return jsonify({'prediction': str(make_prediction(text))}), 200
+
+
 @app.route("/predict", methods=['GET', 'POST'])
 def predict():
-
     if request.method == 'POST':
         symptomps = check_diag(request.json['symptomps'])
         age = check_age(request.json['age'])
