@@ -180,9 +180,9 @@ clf, pcp_dict, icd_dict = get_model()
 mystem = Mystem()
 
 
-BPE_PATH = 'models/bpe.model'
-LENCODER_PATH = 'models/labelEncoder.pickle'
-MODEL_PATH = 'models/model_svm.pickle'
+BPE_PATH = '/var/www/src/models/bpe.model'
+LENCODER_PATH = '/var/www/src/models/labelEncoder.pickle'
+MODEL_PATH = '/var/www/src/models/model_svm.pickle'
 
 bpe = yttm.BPE(model=BPE_PATH)
 with open(MODEL_PATH, 'rb') as handle:
