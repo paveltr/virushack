@@ -62,3 +62,5 @@ spec:
             value: staging
           - name: SLE_START_CRON
             value: "false"
+          - name: MASTER_JSON
+            value: /var/www/deployment/kubernetes/credentials/staging/mymed-deploy.json

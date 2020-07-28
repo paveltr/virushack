@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from google.cloud import storage
 from joblib import dump, load
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder, FunctionTransformer
@@ -17,8 +18,24 @@ import warnings
 from pymystem3 import Mystem
 import youtokentome as yttm
 import pickle
+from google.cloud.storage import Client
+from google.oauth2.service_account import Credentials
+import os
 
 warnings.filterwarnings('ignore')
+
+
+def download_blob(storage_client, bucket_name,
+                  source_blob_name, destination_file_name):
+    """Downloads a blob from the bucket."""
+    # bucket_name = "your-bucket-name"
+    # source_blob_name = "storage-object-name"
+    # destination_file_name = "local/path/to/file"
+
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(source_blob_name)
+    blob.download_to_filename(filename=destination_file_name,
+                              client=storage_client)
 
 
 def text_normalize(x, method='lemma'):
@@ -35,7 +52,7 @@ def text_normalize(x, method='lemma'):
 
 
 def remove_special_symbols(string):
-    return re.sub(r'[^\w]+', ' ', string)
+    return re.sub('[^\w]+', ' ', string)
 
 
 def replace_numbers(string):
@@ -48,6 +65,7 @@ def tokenize(text):
 
 
 def preprocess_text(text):
+    text = text.lower()
     text = remove_special_symbols(text)
     text = replace_numbers(text)
     text = tokenize(text)
@@ -56,9 +74,10 @@ def preprocess_text(text):
 
 def make_prediction(text):
     text = preprocess_text(text)
-    prediction = model_svm.predict([text])
+    prediction = model_svm.predict_proba([text])[0].argsort()[::-1]
+    probabilities = sorted(model_svm.predict_proba([text])[0], reverse=True)
     prediction = labelEncoder.inverse_transform(prediction)
-    return prediction
+    return {k: v for k, v in zip(prediction, probabilities)}
 
 
 def top_pair(values, keys, n=3):
@@ -179,10 +198,19 @@ global clf, pcp_dict, mystem, icd_dict, model_svm, labelEncoder
 clf, pcp_dict, icd_dict = get_model()
 mystem = Mystem()
 
+client = Client(project='cosmic-rarity-277009',
+                credentials=Credentials.from_service_account_file(os.environ['MASTER_JSON']))
 
 BPE_PATH = '/var/www/src/models/bpe.model'
 LENCODER_PATH = '/var/www/src/models/labelEncoder.pickle'
 MODEL_PATH = '/var/www/src/models/model_svm.pickle'
+
+download_blob(client, 'mymed-models',
+              'doctor-prediction/20200729/%s' % 'bpe.model', BPE_PATH)
+download_blob(client, 'mymed-models',
+              'doctor-prediction/20200729/%s' % 'labelEncoder.pickle', LENCODER_PATH)
+download_blob(client, 'mymed-models',
+              'doctor-prediction/20200729/%s' % 'model_svm.pickle', MODEL_PATH)
 
 bpe = yttm.BPE(model=BPE_PATH)
 with open(MODEL_PATH, 'rb') as handle:

@@ -15,7 +15,6 @@ jobs:
           command: |
             openssl aes-256-cbc -K $encrypted_po4f4nzab1o_key -iv $encrypted_po4f4nzab1o_iv -in deployment/kubernetes/credentials.zip.enc -out deployment/kubernetes/credentials.zip -d
             unzip deployment/kubernetes/credentials.zip -d deployment/kubernetes
-            unzip src/models.zip -d src && rm -r src/models.zip
 
       - run:
           name: Temporary prepare circleci image
