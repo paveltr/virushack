@@ -1,7 +1,7 @@
 pip
 Flask==1.0.2
 joblib==0.13.2
-paramiko==2.4.2
+paramiko==2.10.1
 pymysql==0.9.3
 matplotlib==2.2.2
 cython==0.29.7
