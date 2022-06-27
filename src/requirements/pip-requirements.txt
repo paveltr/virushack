@@ -6,7 +6,7 @@ pymysql==0.9.3
 matplotlib==2.2.2
 cython==0.29.7
 psutil==5.6.2
-mysql-connector-python==8.0.13
+mysql-connector-python==8.0.14
 google==2.0.2
 google-cloud>=0.3*.*
 google-cloud-storage==1.16.0
